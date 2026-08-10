@@ -1,0 +1,10 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+__pycache__
+
+.scell_args.cue
+
+.vscode
+.claude
