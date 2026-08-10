@@ -19,12 +19,12 @@ main: {
 		// zsh
 		"apt install -y zsh",
 	]
-	workspace: "mojo-crypto"
+	workspace: "mojo-gpu-async"
 	shell:     "/bin/zsh"
 	hang:      "while true; do sleep 3600; done"
 	config: {
 		mounts: [
-			"./:/mojo-crypto/",
+			"./:/mojo-gpu-async/",
 		]
 	}
 }
