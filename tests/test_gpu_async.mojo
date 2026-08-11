@@ -66,5 +66,55 @@ def test_tasks_complete_independently() raises:
             assert_equal(second^.wait(), 22)
 
 
+async def _record_step(
+    context: Context, step: Pointer[Int, MutUntrackedOrigin]
+) -> Int:
+    """Record the global step each of this coroutine's 3 segments ran at.
+
+    Packed as `segment0 * 100 + segment1 * 10 + segment2`, so the caller can
+    read off exactly when each segment ran from a single `Int`.
+    """
+    var s0 = step[]
+    step[] += 1
+    await context.synchronize()
+
+    var s1 = step[]
+    step[] += 1
+    await context.synchronize()
+
+    var s2 = step[]
+    step[] += 1
+
+    return s0 * 100 + s1 * 10 + s2
+
+
+def test_tasks_resume_round_robin_not_one_at_a_time() raises:
+    comptime if has_accelerator():
+        with DeviceContext() as ctx:
+            var executor = Executor(ctx)
+            var context = executor.context()
+
+            var step = 0
+            var step_ptr = Pointer[Int, MutUntrackedOrigin](
+                unsafe_from_address=Int(Pointer(to=step))
+            )
+
+            var t1 = executor.add(_record_step(context, step_ptr))
+            var t2 = executor.add(_record_step(context, step_ptr))
+            var t3 = executor.add(_record_step(context, step_ptr))
+
+            executor.wait()
+
+            # Each task yields twice. If the executor truly round-robins —
+            # rather than, say, draining one task to completion before
+            # starting the next — every task gets its Nth segment before any
+            # task gets its (N+1)th: t1, t2, t3 at steps 0-2, then t1, t2, t3
+            # again at steps 3-5, then once more at steps 6-8, each in the
+            # order the tasks were added.
+            assert_equal(t1^.wait(), 36)  # segments at steps 0, 3, 6
+            assert_equal(t2^.wait(), 147)  # segments at steps 1, 4, 7
+            assert_equal(t3^.wait(), 258)  # segments at steps 2, 5, 8
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

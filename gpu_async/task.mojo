@@ -4,38 +4,8 @@ from std.atomic import Atomic
 from std.builtin.coroutine import AnyCoroutine
 from std.memory import ArcPointer
 
+from .context import _CoroutineContext
 from .executor import _ExecutorInner
-
-comptime _COMPLETED_FLAG_TYPE = UInt8
-"""Flag type of the completion flag: `Atomic` cannot store a `Bool`'s `i1`."""
-
-comptime _CompletedFlagPointer = Pointer[
-    Atomic[_COMPLETED_FLAG_TYPE], MutUntrackedOrigin
-]
-"""Pointer to a task's completion flag, as the coroutine frame holds it."""
-
-
-struct _TaskContext(TrivialRegisterPassable):
-    """The completion callback installed in a task coroutine's frame.
-
-    Replaces the stdlib's `_CoroutineContext` in the same slot, so it has to
-    keep that shape: a thin callback followed by the pointer-sized payload the
-    coroutine passes to it when it completes.
-    """
-
-    comptime callback_fn_type = def(_CompletedFlagPointer) thin -> None
-
-    var callback: Self.callback_fn_type
-    var completed: _CompletedFlagPointer
-
-
-def _mark_completed(flag: _CompletedFlagPointer):
-    """Raise a task's completion flag.
-
-    Args:
-        flag: The flag of the task whose coroutine has just completed.
-    """
-    flag[].store(1)
 
 
 struct Task[type: Deinitable & Movable, origins: OriginSet](
@@ -47,9 +17,17 @@ struct Task[type: Deinitable & Movable, origins: OriginSet](
     pointers into this struct.
     """
 
+    comptime _COMPLETED_FLAG_TYPE = UInt8
+    """Flag type of the completion flag: `Atomic` cannot store a `Bool`'s `i1`."""
+
+    comptime _CompletedFlagPointer = Pointer[
+        Atomic[Self._COMPLETED_FLAG_TYPE], MutUntrackedOrigin
+    ]
+    """Pointer to a task's completion flag, as the coroutine frame holds it."""
+
     var _executor: ArcPointer[_ExecutorInner]
     var _handle: AnyCoroutine
-    var _completed: Atomic[_COMPLETED_FLAG_TYPE]
+    var _completed: Atomic[Self._COMPLETED_FLAG_TYPE]
     var _result: Self.type
 
     def __init__(
@@ -69,16 +47,18 @@ struct Task[type: Deinitable & Movable, origins: OriginSet](
                 transferred.
         """
         self._executor = executor^
-        self._completed = Atomic[_COMPLETED_FLAG_TYPE](0)
+        self._completed = Atomic[Self._COMPLETED_FLAG_TYPE](0)
+
         __mlir_op.`lit.ownership.mark_initialized`(
             __get_mvalue_as_litref(self._result)
         )
         handle._set_result_slot(Pointer(to=self._result))
 
-        var ctx = handle._get_ctx[_TaskContext]()
-        ctx[].callback = _mark_completed
-        ctx[].completed = _CompletedFlagPointer(
-            unsafe_from_address=Int(Pointer(to=self._completed))
+        _install_completion_callback[Self.type, Self.origins](
+            handle,
+            Self._CompletedFlagPointer(
+                unsafe_from_address=Int(Pointer(to=self._completed))
+            ),
         )
 
         self._handle = handle^._take_handle()
@@ -103,3 +83,26 @@ struct Task[type: Deinitable & Movable, origins: OriginSet](
         False; once True, the result is there.
         """
         return self._completed.load() != 0
+
+
+def _install_completion_callback[
+    type: Deinitable & Movable, origins: OriginSet
+](
+    mut handle: Coroutine[type, origins],
+    completed: Task[type, origins]._CompletedFlagPointer,
+):
+    """Install the completion callback in a task coroutine's frame.
+
+    Args:
+        handle: The coroutine to install the callback on.
+        completed: The flag to raise once the coroutine completes.
+    """
+
+    def _mark_completed(flag: Task[type, origins]._CompletedFlagPointer):
+        flag[].store(1)
+
+    var ctx = handle._get_ctx[
+        _CoroutineContext[Task[type, origins]._CompletedFlagPointer]
+    ]()
+    ctx[].callback = _mark_completed
+    ctx[].payload = completed

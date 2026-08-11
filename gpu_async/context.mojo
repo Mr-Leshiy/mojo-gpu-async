@@ -36,8 +36,8 @@ struct Context(Movable):
     async def synchronize(self):
         """Suspend the calling coroutine and re-queue it on the executor.
 
-        Awaiting this hands control back to the executor so other tasks can run;
-        the device itself is synchronized once by `Executor.wait`.
+        This is an async alternative of
+        https://mojolang.org/docs/std/gpu/host/device_context/DeviceContext/#synchronize.
 
         Note:
             Only a coroutine spawned on the executor this context came from may
@@ -48,6 +48,28 @@ struct Context(Movable):
 
         @parameter
         def body(hdl: AnyCoroutine):
-            self._executor[].enqueue(hdl)
+            # is_need_sync=True: `hdl` launched GPU work right before this
+            # yield, so it must not resume until the device has synced.
+            self._executor[].add(hdl, True)
 
         _suspend_async[body]()
+
+
+struct _CoroutineContext[P: TrivialRegisterPassable](TrivialRegisterPassable):
+    """A generic completion context, assigned to a coroutine's frame.
+
+    Replaces the stdlib's `_CoroutineContext` in the same slot, so it has to
+    keep that shape: a thin callback followed by the pointer-sized payload the
+    coroutine passes to it when it completes. Together the two fields must
+    total 16 bytes — a thin function pointer plus one pointer-sized `P` — to
+    match the size the stdlib reserves for it in the coroutine frame.
+
+    Parameterized over `P` so callers can carry whatever pointer-sized
+    payload their callback needs (e.g. a task's completion-flag pointer)
+    without `_CoroutineContext` itself knowing about tasks.
+    """
+
+    comptime callback_fn_type = def(Self.P) thin -> None
+
+    var callback: Self.callback_fn_type
+    var payload: Self.P
