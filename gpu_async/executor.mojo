@@ -49,7 +49,7 @@ struct Executor(Movable):
             handle: The coroutine to run. Ownership is transferred.
         """
         task = Task(handle^, self._inner.copy())
-        self._inner[].add(task._handle)
+        self._inner[].add(task._handle, False)
 
     def wait(self) raises:
         """Run queued tasks until all have completed, then sync the device."""
@@ -69,9 +69,24 @@ struct _ExecutorInner:
     # dropping the append. Behind a pointer the header lives outside that
     # borrow and both paths agree on it. Note that the queue is genuinely
     # shared-mutable across those two paths, so `OwnedPointer`'s uniqueness
-    # claim is a fiction the optimizer is free to act on.
+    # claim is a fiction the optimizer is free to act on. `_sync_counter`
+    # below is read and written through the same two paths, for the same
+    # reason, so it lives behind a pointer too.
     # (Analysis by Claude)
     var _q: OwnedPointer[Deque[AnyCoroutine]]
+
+    # How many pops, from the front of `_q`, until we reach the first
+    # coroutine that's resuming after a `Context.synchronize()` yield. `0`
+    # means none is currently queued.
+    #
+    # A device sync is a global barrier, so firing it once, right before
+    # that first tracked pop, is enough to cover every other "resuming after
+    # a yield" coroutine queued behind it too — their GPU work was launched
+    # even earlier in real time, so the same sync flushes it as well. That's
+    # why `add` only sets this when it's `0`: anything that yields while a
+    # sync is already pending rides it for free instead of scheduling a
+    # redundant one.
+    var _sync_counter: OwnedPointer[Int]
 
     def __init__(out self, ctx: DeviceContext):
         """Initialize the shared state with an empty queue.
@@ -81,6 +96,7 @@ struct _ExecutorInner:
         """
         self._ctx = ctx
         self._q = OwnedPointer(Deque[AnyCoroutine]())
+        self._sync_counter = OwnedPointer(0)
 
     def __deinit__(deinit self):
         """Destroy every coroutine still queued."""
@@ -91,21 +107,26 @@ struct _ExecutorInner:
         except:
             pass
 
-    def add(mut self, handle: AnyCoroutine):
-        """Queue a freshly created coroutine.
+    def add(mut self, handle: AnyCoroutine, is_need_sync: Bool):
+        """Queue a coroutine: freshly created, or resuming after a yield.
 
         Args:
             handle: The coroutine to run. The caller keeps ownership of it.
-        """
-        self.enqueue(handle)
-
-    def enqueue(mut self, handle: AnyCoroutine):
-        """Queue a suspended coroutine for a later resume.
-
-        Args:
-            handle: The coroutine to resume. The caller keeps ownership of it.
+            is_need_sync: True if `handle` is resuming after
+                `Context.synchronize()` suspended it, so it may depend on
+                GPU work it queued right before yielding and needs the
+                device synced before it runs again. False for a freshly
+                created task, which hasn't launched anything yet and so
+                never needs a sync of its own.
         """
         self._q[].append(handle)
+        # Only the *first* pending "needs sync" coroutine claims the
+        # counter — see the field comment above. Its value is `handle`'s
+        # 1-indexed position in the queue once appended below (`len(_q)`
+        # items already ahead of it, plus itself); `wait_until` counts pops
+        # down to that exact position before resuming it.
+        if is_need_sync and self._sync_counter[] == 0:
+            self._sync_counter[] = len(self._q[])
 
     def wait(mut self) raises:
         """Run queued coroutines until all have completed."""
@@ -119,10 +140,21 @@ struct _ExecutorInner:
     def wait_until[predicate: def() thin capturing -> Bool](mut self) raises:
         """Run queued coroutines until `predicate` holds or the queue empties.
 
-        The device is synchronized before returning either way.
+        Synchronizes the device lazily: once, right before resuming the
+        first queued coroutine that's waiting on one — not before every
+        resume, and not unconditionally after the loop.
         """
+
         while not predicate() and len(self._q[]) > 0:
             var handle = self._q[].popleft()
-            _coro_resume_fn(handle)
 
-        self._ctx.synchronize()
+            # `handle` is the tracked "needs sync" coroutine exactly when
+            # the countdown reaches 1: sync now, before resuming it — not
+            # before any of the fresh/no-op coroutines popped earlier.
+            if self._sync_counter[] == 1:
+                self._ctx.synchronize()
+
+            if self._sync_counter[] > 0:
+                self._sync_counter[] -= 1
+
+            _coro_resume_fn(handle)

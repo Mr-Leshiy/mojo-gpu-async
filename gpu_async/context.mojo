@@ -39,9 +39,6 @@ struct Context(Movable):
         This is an async alternative of
         https://mojolang.org/docs/std/gpu/host/device_context/DeviceContext/#synchronize.
 
-        Awaiting this hands control back to the executor so other tasks can run;
-        the device itself is synchronized once by `Executor.wait`.
-
         Note:
             Only a coroutine spawned on the executor this context came from may
             await this. It re-queues the caller onto that executor's queue, so
@@ -51,7 +48,9 @@ struct Context(Movable):
 
         @parameter
         def body(hdl: AnyCoroutine):
-            self._executor[].enqueue(hdl)
+            # is_need_sync=True: `hdl` launched GPU work right before this
+            # yield, so it must not resume until the device has synced.
+            self._executor[].add(hdl, True)
 
         _suspend_async[body]()
 
