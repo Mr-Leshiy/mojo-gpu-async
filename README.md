@@ -77,13 +77,13 @@ flowchart TD
     S0["t1, t2, t3"]
 
     S0 -->|"resume(t1) — awaits ctx.synchronize()"| S1["t2, t3, ctx.synchronize(), t1_1"]
-    S1 -->|"resume(t2) — awaits ctx.synchronize();<br/>a `ctx.synchronize()` is already pending, so none is added"| S2["t3, ctx.synchronize(), t1_1, t2_1"]
-    S2 -->|"resume(t3) — awaits ctx.synchronize();<br/>a `ctx.synchronize()` is already pending, so none is added"| S3["ctx.synchronize(), t1_1, t2_1, t3_1"]
+    S1 -->|"resume(t2) — awaits ctx.synchronize();<br/>sync is already pending, so none is added"| S2["t3, ctx.synchronize(), t1_1, t2_1"]
+    S2 -->|"resume(t3) — awaits ctx.synchronize();<br/>sync is already pending, so none is added"| S3["ctx.synchronize(), t1_1, t2_1, t3_1"]
     S3 -->|"the pending `ctx.synchronize()` is reached, runs once"| S4["t1_1, t2_1, t3_1"]
 
     S4 -->|"resume(t1_1) - awaits ctx.synchronize()"| S5["t2_1, t3_1, ctx.synchronize(), t1_2"]
-    S5 -->|"resume(t2_1) - awaits ctx.synchronize();<br/>a `ctx.synchronize()` is already pending, so none is added"| S6["t3_1, ctx.synchronize(), t1_2, t2_2"]
-    S6 -->|"resume(t3_1) - awaits ctx.synchronize();<br/>a `ctx.synchronize()` is already pending, so none is added"| S7["ctx.synchronize(), t1_2, t2_2, t3_2"]
+    S5 -->|"resume(t2_1) - awaits ctx.synchronize();<br/>sync is already pending, so none is added"| S6["t3_1, ctx.synchronize(), t1_2, t2_2"]
+    S6 -->|"resume(t3_1) - awaits ctx.synchronize();<br/>sync is already pending, so none is added"| S7["ctx.synchronize(), t1_2, t2_2, t3_2"]
     S7 -->|"the pending `ctx.synchronize()` is reached, runs once"| S8["t1_2, t2_2, t3_2"]
 
     S8 -->|"resume(t1_2)"| S9["t2_2, t3_2"]
