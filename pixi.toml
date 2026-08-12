@@ -1,6 +1,6 @@
 [workspace]
 authors = ["Mr-Leshiy <leshiy12345678@gmail.com>"]
-channels = ["conda-forge", "https://conda.modular.com/max-nightly"]
+channels = ["conda-forge", "https://conda.modular.com/max"]
 name = "mojo-gpu-async"
 platforms = ["osx-arm64", "linux-aarch64", "linux-64"]
 version = "0.1.0"
@@ -28,7 +28,7 @@ docs = "python -m pymodo build && hugo --source docs/site"
 test   = "python scripts/test.py"
 
 [dependencies]
-modular = "*"
+modular = "26.5.0"
 rust = ">=1.80.0,<2"
 hugo = ">=0.163.3,<0.164"
 go = ">=1.26.4,<2"
