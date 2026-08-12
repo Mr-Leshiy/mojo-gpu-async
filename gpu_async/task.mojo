@@ -188,18 +188,14 @@ struct RaisingTask[type: Deinitable & Movable, origins: OriginSet](
 
 @always_inline
 def _completed_flag_ptr(
-    completed: Atomic[_COMPLETED_FLAG_TYPE]
+    completed: Atomic[_COMPLETED_FLAG_TYPE],
 ) -> _CompletedFlagPointer:
     """Build the untracked pointer a coroutine frame uses to reach a flag."""
-    return _CompletedFlagPointer(
-        unsafe_from_address=Int(Pointer(to=completed))
-    )
+    return _CompletedFlagPointer(unsafe_from_address=Int(Pointer(to=completed)))
 
 
 def _install_completion_callback(
-    ctx: Pointer[
-        _CoroutineContext[_CompletedFlagPointer], MutUntrackedOrigin
-    ],
+    ctx: Pointer[_CoroutineContext[_CompletedFlagPointer], MutUntrackedOrigin],
     completed: _CompletedFlagPointer,
 ):
     """Install the completion callback in a task coroutine's frame.

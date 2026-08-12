@@ -14,6 +14,7 @@ from std.testing import TestSuite, assert_equal
 from gpu_async.context import Context
 from gpu_async.executor import Executor
 
+
 def _square_kernel(buf: Pointer[Float32, MutAnyOrigin], size: Int):
     """Square each element of `buf` in place, one thread per element."""
     var idx = global_idx.x
@@ -24,12 +25,13 @@ def _square_kernel(buf: Pointer[Float32, MutAnyOrigin], size: Int):
 
 async def _square_on_gpu[
     size: Int
-](
-    context: Context, input: Array[Float32, size]
-) raises -> Array[Float32, size]:
-
-    var device_buffer = context.gpu_ctx().enqueue_create_buffer[DType.float32](size)
-    context.gpu_ctx().enqueue_copy(dst_buf=device_buffer, src_ptr=input.unsafe_ptr())
+](context: Context, input: Array[Float32, size]) raises -> Array[Float32, size]:
+    var device_buffer = context.gpu_ctx().enqueue_create_buffer[DType.float32](
+        size
+    )
+    context.gpu_ctx().enqueue_copy(
+        dst_buf=device_buffer, src_ptr=input.unsafe_ptr()
+    )
     await context.synchronize()
 
     context.gpu_ctx().enqueue_function[_square_kernel](
@@ -42,7 +44,9 @@ async def _square_on_gpu[
     await context.synchronize()
 
     var result = Array[Float32, size](uninitialized=True)
-    context.gpu_ctx().enqueue_copy(dst_ptr=result.unsafe_ptr(), src_buf=device_buffer)
+    context.gpu_ctx().enqueue_copy(
+        dst_ptr=result.unsafe_ptr(), src_buf=device_buffer
+    )
     await context.synchronize()
 
     return result^
@@ -54,9 +58,8 @@ def test_square_kernel_runs_through_executor() raises:
             var executor = Executor(ctx)
             var context = executor.context()
 
-
             comptime SIZE = 8
-            var input:Array[Float32, SIZE] = [1, 2, 3, 4, 5, 6, 7, 8]
+            var input: Array[Float32, SIZE] = [1, 2, 3, 4, 5, 6, 7, 8]
 
             var task = executor.add(_square_on_gpu[SIZE](context, input))
             executor.wait()
