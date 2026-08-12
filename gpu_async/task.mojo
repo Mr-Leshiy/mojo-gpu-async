@@ -17,7 +17,7 @@ struct Task[type: Deinitable & Movable, origins: OriginSet](
     pointers into this struct.
     """
 
-    comptime _COMPLETED_FLAG_TYPE = UInt8
+    comptime _COMPLETED_FLAG_TYPE = DType.uint8
     """Flag type of the completion flag: `Atomic` cannot store a `Bool`'s `i1`."""
 
     comptime _CompletedFlagPointer = Pointer[
