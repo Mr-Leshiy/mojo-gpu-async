@@ -1,4 +1,5 @@
 from max.gpu.host import DeviceContext
+from std.memory import OwnedPointer
 from std.sys import has_accelerator
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
@@ -69,11 +70,6 @@ def test_tasks_complete_independently() raises:
 async def _record_step(
     context: Context, step: Pointer[Int, MutUntrackedOrigin]
 ) -> Int:
-    """Record the global step each of this coroutine's 3 segments ran at.
-
-    Packed as `segment0 * 100 + segment1 * 10 + segment2`, so the caller can
-    read off exactly when each segment ran from a single `Int`.
-    """
     var s0 = step[]
     step[] += 1
     await context.synchronize()
@@ -94,10 +90,19 @@ def test_tasks_resume_round_robin_not_one_at_a_time() raises:
             var executor = Executor(ctx)
             var context = executor.context()
 
-            var step = 0
-            var step_ptr = Pointer[Int, MutUntrackedOrigin](
-                unsafe_from_address=Int(Pointer(to=step))
-            )
+            # `step` has to live behind a pointer, not as a bare local: it's
+            # read and written from three coroutines reached through
+            # `step_ptr`'s untracked origin, a path the compiler can't see
+            # aliases `step` itself. A bare stack slot may be kept in a
+            # register at each of those disconnected access points instead of
+            # actually written back, so reads through `step_ptr` see garbage.
+            # Behind a pointer, the int lives outside any single call frame
+            # and every access agrees on the same memory. Same issue as
+            # `_ExecutorInner._q` in `gpu_async/executor.mojo`.
+            var step = OwnedPointer(0)
+            var step_ptr = step.unsafe_ptr[mut=True]().unsafe_origin_cast[
+                MutUntrackedOrigin
+            ]()
 
             var t1 = executor.add(_record_step(context, step_ptr))
             var t2 = executor.add(_record_step(context, step_ptr))
