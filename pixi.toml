@@ -28,7 +28,7 @@ docs = "python -m pymodo build && hugo --source docs/site"
 test   = "python scripts/test.py"
 
 [dependencies]
-modular = "26.5.0"
+modular = "==26.5.0"
 rust = ">=1.80.0,<2"
 hugo = ">=0.163.3,<0.164"
 go = ">=1.26.4,<2"
