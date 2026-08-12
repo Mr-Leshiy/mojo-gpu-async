@@ -3,6 +3,8 @@
 from max.gpu.host import DeviceContext
 from std.builtin.coroutine import (
     AnyCoroutine,
+    Coroutine,
+    RaisingCoroutine,
     _coro_resume_fn,
     _coro_destroy_fn,
 )
@@ -10,7 +12,7 @@ from std.collections import Deque
 from std.memory import ArcPointer, OwnedPointer
 
 from .context import Context
-from .task import Task
+from .task import RaisingTask, Task
 
 
 struct Executor(Movable):
@@ -49,6 +51,24 @@ struct Executor(Movable):
             handle: The coroutine to run. Ownership is transferred.
         """
         task = Task(handle^, self._inner.copy())
+        self._inner[].add(task._handle, False)
+
+    def add[
+        type: Deinitable & Movable, origins: OriginSet
+    ](
+        mut self,
+        var handle: RaisingCoroutine[type, origins],
+        out task: RaisingTask[type, origins],
+    ):
+        """Queue a raising coroutine and return the task tracking it.
+
+        The coroutine is not started here: `wait` is what runs it. Its error,
+        if it raises one, surfaces from the returned task's `wait`.
+
+        Args:
+            handle: The raising coroutine to run. Ownership is transferred.
+        """
+        task = RaisingTask(handle^, self._inner.copy())
         self._inner[].add(task._handle, False)
 
     def wait(self) raises:
