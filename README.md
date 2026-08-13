@@ -1,24 +1,55 @@
 # mojo-gpu-async
 
-A single-threaded async runtime for GPU-based Mojo coroutines.
+A single-threaded async runtime for GPU-based Mojo coroutines. It smartly
+coalesces `DeviceContext.synchronize()` calls across queued tasks.
 
 ```mojo
 from max.gpu.host import DeviceContext
+from std.gpu import global_idx
 from gpu_async import Context, Executor
 
 
-async def work(ctx: Context) -> Int:
-    # ... launch GPU kernels via ctx.gpu_ctx() ...
+def square_kernel(buf: Pointer[Float32, MutAnyOrigin]):
+    var idx = global_idx.x
+    var value = buf[unsafe_offset=idx]
+    buf[unsafe_offset=idx] = value * value
+
+
+async def square[
+    size: Int
+](ctx: Context, input: Array[Float32, size]) raises -> Array[Float32, size]:
+    var device_buffer = ctx.gpu_ctx().enqueue_create_buffer[DType.float32](size)
+    ctx.gpu_ctx().enqueue_copy(
+        dst_buf=device_buffer, src_ptr=input.unsafe_ptr()
+    )
     await ctx.synchronize()  # yield to the other queued tasks
-    return 42
+
+    ctx.gpu_ctx().enqueue_function[square_kernel](
+        device_buffer, grid_dim=1, block_dim=size
+    )
+
+    var result = Array[Float32, size](uninitialized=True)
+    ctx.gpu_ctx().enqueue_copy(
+        dst_ptr=result.unsafe_ptr(), src_buf=device_buffer
+    )
+    await ctx.synchronize()
+    return result^
 
 
 def main() raises:
     with DeviceContext() as ctx:
         var executor = Executor(ctx)
-        var task = executor.add(work(executor.context()))
+        var context = executor.context()
+
+        var input1: Array[Float32, 4] = [1, 2, 3, 4]
+        var t1 = executor.add(square(context, input1))
+
+        var input2: Array[Float32, 4] = [5, 6, 7, 8]
+        var t2 = executor.add(square(context, input2))
+
         executor.wait()
-        print(task^.wait())
+        print(t1^.wait())  # [1, 4, 9, 16]
+        print(t2^.wait())  # [25, 36, 49, 64]
 ```
 
 ## Development
