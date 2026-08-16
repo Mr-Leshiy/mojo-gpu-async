@@ -1,10 +1,37 @@
 [workspace]
 authors = ["Mr-Leshiy <leshiy12345678@gmail.com>"]
 channels = ["conda-forge", "https://conda.modular.com/max"]
-name = "mojo-gpu-async"
 platforms = ["osx-arm64", "linux-aarch64", "linux-64"]
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
+preview = ["pixi-build"]
+
+[workspace.dependencies]
+mojo = "1.0.0.*"
+max = "26.5.0.*"
+
+# Builds `gpu_async/` into an installable `gpu_async.mojopkg` conda package via
+# pixi-build-mojo. The pkg path is spelled out rather than left to auto-derive
+# since auto-derive only looks in `<workspace_name>/` (i.e. `mojo-gpu-async/`)
+# or `src/`, neither of which matches this package's `gpu_async/` directory.
+[package]
+name = "gpu_async"
+version = "0.1.0"
+
+[package.build]
+backend = { name = "pixi-build-mojo", version = "0.*" }
+
+[package.host-dependencies]
+mojo.workspace = true
+max.workspace = true
+
+[package.build-dependencies]
+mojo.workspace = true
+max.workspace = true
+
+[package.run-dependencies]
+mojo.workspace = true
+max.workspace = true
 
 [tasks]
 fmt    = "mojo format ."
@@ -28,7 +55,9 @@ docs = "python -m pymodo build && hugo --source docs/site"
 test   = "python scripts/test.py"
 
 [dependencies]
-modular = "26.5.0.*"
+mojo.workspace = true
+max.workspace = true
+gpu_async = { path = "." }
 rust = ">=1.80.0,<2"
 hugo = ">=0.163.3,<0.164"
 go = ">=1.26.4,<2"
