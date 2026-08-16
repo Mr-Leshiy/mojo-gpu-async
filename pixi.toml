@@ -7,7 +7,7 @@ license = "MIT OR Apache-2.0"
 preview = ["pixi-build"]
 
 [workspace.dependencies]
-mojo-compiler = "1.0.0.*"
+mojo = "1.0.0.*"
 max = "26.5.0.*"
 
 # Builds `gpu_async/` into an installable `gpu_async.mojopkg` conda package via
@@ -22,15 +22,15 @@ version = "0.1.0"
 backend = { name = "pixi-build-mojo", version = "0.*" }
 
 [package.host-dependencies]
-mojo-compiler.workspace = true
+mojo.workspace = true
 max.workspace = true
 
 [package.build-dependencies]
-mojo-compiler.workspace = true
+mojo.workspace = true
 max.workspace = true
 
 [package.run-dependencies]
-mojo-compiler.workspace = true
+mojo.workspace = true
 max.workspace = true
 
 [tasks]
@@ -55,7 +55,7 @@ docs = "python -m pymodo build && hugo --source docs/site"
 test   = "python scripts/test.py"
 
 [dependencies]
-mojo-compiler.workspace = true
+mojo.workspace = true
 max.workspace = true
 gpu_async = { path = "." }
 rust = ">=1.80.0,<2"
