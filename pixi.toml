@@ -21,10 +21,6 @@ version = "0.1.0"
 [package.build]
 backend = { name = "pixi-build-mojo", version = "0.*" }
 
-[package.build.config.pkg]
-name = "gpu_async"
-path = "gpu_async"
-
 [package.host-dependencies]
 mojo-compiler.workspace = true
 max.workspace = true
