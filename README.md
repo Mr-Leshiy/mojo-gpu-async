@@ -58,6 +58,8 @@ def main() raises:
 
 ## Install
 
+Requires [pixi](https://pixi.sh).
+
 ```toml
 [workspace]
 channels = ["conda-forge", "https://conda.modular.com/max"]
@@ -71,7 +73,7 @@ mojo-gpu-async = { git = "https://github.com/Mr-Leshiy/mojo-gpu-async.git", tag 
 pixi install
 ```
 
-Requires [pixi](https://pixi.sh) (pulls Mojo automatically). Pin to a [released tag](https://github.com/Mr-Leshiy/mojo-gpu-async/releases) for reproducible builds.
+Pin to a [released tag](https://github.com/Mr-Leshiy/mojo-gpu-async/releases) for reproducible builds.
 
 To track unreleased work (breaking changes possible between tags):
 
