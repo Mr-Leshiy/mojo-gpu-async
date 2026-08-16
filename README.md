@@ -56,6 +56,30 @@ def main() raises:
         print(t2^.wait())  # [25, 36, 49, 64]
 ```
 
+## Install
+
+```toml
+[workspace]
+channels = ["conda-forge", "https://conda.modular.com/max"]
+preview = ["pixi-build"]
+
+[dependencies]
+mojo-gpu-async = { git = "https://github.com/Mr-Leshiy/mojo-gpu-async.git", tag = "<latest-release>" }
+```
+
+```bash
+pixi install
+```
+
+Requires [pixi](https://pixi.sh) (pulls Mojo automatically). Pin to a [released tag](https://github.com/Mr-Leshiy/mojo-gpu-async/releases) for reproducible builds.
+
+To track unreleased work (breaking changes possible between tags):
+
+```toml
+[dependencies]
+mojo-gpu-async = { git = "https://github.com/Mr-Leshiy/mojo-gpu-async.git", branch = "main" }
+```
+
 ## Development
 
 Requires [pixi](https://pixi.sh).
