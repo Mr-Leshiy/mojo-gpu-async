@@ -1,0 +1,19 @@
+---
+name: Bug Report
+about: Report a bug or issue with mojo-gpu-async
+title: ''
+labels: 'bug'
+assignees: ''
+---
+
+## Description
+
+<!-- Describe the issue you're experiencing -->
+
+## Logs (optional)
+
+<!-- If applicable, paste any relevant logs or error messages here -->
+
+```
+# Paste logs here
+```
