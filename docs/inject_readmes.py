@@ -17,7 +17,7 @@ CONTENT_ROOT = "docs/site/content"
 
 
 def main() -> None:
-    for readme in glob.glob("gpu_async/**/README.md", recursive=True):
+    for readme in glob.glob("src/**/README.md", recursive=True):
         index = os.path.join(CONTENT_ROOT, os.path.dirname(readme), "_index.md")
         if not os.path.isfile(index):
             continue

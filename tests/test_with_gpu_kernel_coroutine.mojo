@@ -2,8 +2,8 @@ from max.gpu.host import DeviceContext
 from std.gpu import global_idx
 from std.testing import TestSuite, assert_equal
 
-from gpu_async.context import Context
-from gpu_async.executor import Executor
+from warp.context import Context
+from warp.executor import Executor
 
 
 def square_kernel(buf: Pointer[Float32, MutAnyOrigin]):

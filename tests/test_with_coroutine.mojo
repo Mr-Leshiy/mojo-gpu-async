@@ -3,8 +3,8 @@ from std.memory import OwnedPointer
 from std.sys import has_accelerator
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
-from gpu_async.context import Context
-from gpu_async.executor import Executor
+from warp.context import Context
+from warp.executor import Executor
 
 
 async def _yield_once(context: Context) -> Int:
@@ -98,7 +98,7 @@ def test_tasks_resume_round_robin_not_one_at_a_time() raises:
             # actually written back, so reads through `step_ptr` see garbage.
             # Behind a pointer, the int lives outside any single call frame
             # and every access agrees on the same memory. Same issue as
-            # `_ExecutorInner._q` in `gpu_async/executor.mojo`.
+            # `_ExecutorInner._q` in `warp/executor.mojo`.
             var step = OwnedPointer(0)
             var step_ptr = step.unsafe_ptr[mut=True]().unsafe_origin_cast[
                 MutUntrackedOrigin

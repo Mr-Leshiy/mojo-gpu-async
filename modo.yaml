@@ -9,11 +9,11 @@ input:
 
 # Source directories to monitor when running in watch mode.
 source:
-  - gpu_async
+  - warp
 
 # Full URLs of package sources. Used to create source links.
 source-url:
-  gpu_async: https://github.com/Mr-Leshiy/mojo-gpu-async/blob/main/gpu_async
+  warp: https://github.com/Mr-Leshiy/warp/blob/main/warp
 
 # Output directory (Hugo content root).
 output: docs/site/content
@@ -50,7 +50,7 @@ templates: []
 pre-run:
   - |
     echo "Generating API JSON with 'mojo doc'..."
-    mojo doc -I . -o docs/src/gpu_async.json gpu_async
+    mojo doc -I . -o docs/src/warp.json warp
     echo "Done."
 
 # Bash scripts to run before build.
