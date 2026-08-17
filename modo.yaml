@@ -9,11 +9,11 @@ input:
 
 # Source directories to monitor when running in watch mode.
 source:
-  - warp
+  - src
 
 # Full URLs of package sources. Used to create source links.
 source-url:
-  warp: https://github.com/Mr-Leshiy/warp/blob/main/warp
+  warp: https://github.com/Mr-Leshiy/warp/blob/main/src
 
 # Output directory (Hugo content root).
 output: docs/site/content
