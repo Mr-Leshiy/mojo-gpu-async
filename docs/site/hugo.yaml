@@ -24,7 +24,7 @@ menu:
         type: search
     - name: GitHub
       weight: 2
-      url: "https://github.com/Mr-Leshiy/mojo-gpu-async"
+      url: "https://github.com/Mr-Leshiy/warp"
       params:
         icon: github
 

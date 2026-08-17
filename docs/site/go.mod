@@ -1,4 +1,4 @@
-module github.com/Mr-Leshiy/mojo-gpu-async/docs
+module github.com/Mr-Leshiy/warp/docs
 
 go 1.23.0
 

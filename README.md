@@ -66,20 +66,20 @@ channels = ["conda-forge", "https://conda.modular.com/max"]
 preview = ["pixi-build"]
 
 [dependencies]
-warp = { git = "https://github.com/Mr-Leshiy/mojo-gpu-async.git", tag = "<latest-release>" }
+warp = { git = "https://github.com/Mr-Leshiy/warp.git", tag = "<latest-release>" }
 ```
 
 ```bash
 pixi install
 ```
 
-Pin to a [released tag](https://github.com/Mr-Leshiy/mojo-gpu-async/releases) for reproducible builds.
+Pin to a [released tag](https://github.com/Mr-Leshiy/warp/releases) for reproducible builds.
 
 To track unreleased work (breaking changes possible between tags):
 
 ```toml
 [dependencies]
-warp = { git = "https://github.com/Mr-Leshiy/mojo-gpu-async.git", branch = "main" }
+warp = { git = "https://github.com/Mr-Leshiy/warp.git", branch = "main" }
 ```
 
 ## Development

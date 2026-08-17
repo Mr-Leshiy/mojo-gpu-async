@@ -13,7 +13,7 @@ source:
 
 # Full URLs of package sources. Used to create source links.
 source-url:
-  warp: https://github.com/Mr-Leshiy/mojo-gpu-async/blob/main/warp
+  warp: https://github.com/Mr-Leshiy/warp/blob/main/warp
 
 # Output directory (Hugo content root).
 output: docs/site/content
