@@ -1,4 +1,4 @@
-# mojo-gpu-async
+# WARP
 
 A single-threaded async runtime for GPU-based Mojo coroutines. It smartly
 coalesces `DeviceContext.synchronize()` calls across queued tasks.
@@ -10,7 +10,7 @@ coalesces `DeviceContext.synchronize()` calls across queued tasks.
 ```mojo
 from max.gpu.host import DeviceContext
 from std.gpu import global_idx
-from gpu_async import Context, Executor
+from warp import Context, Executor
 
 
 def square_kernel(buf: Pointer[Float32, MutAnyOrigin], size: Int32):
@@ -66,7 +66,7 @@ channels = ["conda-forge", "https://conda.modular.com/max"]
 preview = ["pixi-build"]
 
 [dependencies]
-mojo-gpu-async = { git = "https://github.com/Mr-Leshiy/mojo-gpu-async.git", tag = "<latest-release>" }
+warp = { git = "https://github.com/Mr-Leshiy/mojo-gpu-async.git", tag = "<latest-release>" }
 ```
 
 ```bash
@@ -79,7 +79,7 @@ To track unreleased work (breaking changes possible between tags):
 
 ```toml
 [dependencies]
-mojo-gpu-async = { git = "https://github.com/Mr-Leshiy/mojo-gpu-async.git", branch = "main" }
+warp = { git = "https://github.com/Mr-Leshiy/mojo-gpu-async.git", branch = "main" }
 ```
 
 ## Development

@@ -10,12 +10,8 @@ preview = ["pixi-build"]
 mojo = "1.0.0.*"
 max = "26.5.0.*"
 
-# Builds `gpu_async/` into an installable `gpu_async.mojopkg` conda package via
-# pixi-build-mojo. The pkg path is spelled out rather than left to auto-derive
-# since auto-derive only looks in `<workspace_name>/` (i.e. `mojo-gpu-async/`)
-# or `src/`, neither of which matches this package's `gpu_async/` directory.
 [package]
-name = "gpu_async"
+name = "warp"
 version = "0.1.0"
 
 [package.build]
@@ -31,7 +27,6 @@ max.workspace = true
 
 [package.run-dependencies]
 mojo.workspace = true
-max.workspace = true
 
 [tasks]
 fmt    = "mojo format ."
@@ -57,7 +52,7 @@ test   = "python scripts/test.py"
 [dependencies]
 mojo.workspace = true
 max.workspace = true
-gpu_async = { path = "." }
+warp = { path = "." }
 rust = ">=1.80.0,<2"
 hugo = ">=0.163.3,<0.164"
 go = ">=1.26.4,<2"
