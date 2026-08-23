@@ -1,0 +1,17 @@
+package:
+  name: mojo
+  version: "1.0.0"
+
+build:
+  number: 0
+  script: |
+    set -euo pipefail
+    SRC="$HOME/Projects/modular/bazel-bin/KGEN/tools/mojo/mojo-full"
+    mkdir -p "$PREFIX/bin"
+    cp "$SRC" "$PREFIX/bin/mojo"
+
+requirements:
+  run: []
+
+about:
+  summary: Locally built Mojo compiler (from modular bazel-bin/KGEN/tools/mojo/mojo-full)
