@@ -1,0 +1,16 @@
+# See src/BUILD.bazel for context -- evaluated as part of a `modular`
+# checkout via a symlink, not built standalone.
+load("//bazel:api.bzl", "mojo_test")
+
+[
+    mojo_test(
+        name = f.removesuffix(".mojo"),
+        srcs = [f],
+        deps = [
+            "//max/_warp/src:warp",
+            "//max/mojo/max:max",
+            "@mojo//:std",
+        ],
+    )
+    for f in glob(["test_*.mojo"])
+]
