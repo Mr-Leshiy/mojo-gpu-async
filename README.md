@@ -92,6 +92,33 @@ pixi run test   # run tests (needs a GPU-enabled host)
 pixi run docs   # build the API docs site
 ```
 
+### Running against a local Mojo build
+
+To build and run against a Mojo compiler, stdlib and `max` compiled from source — e.g. to test
+a change to the compiler itself, or to pick up unreleased Mojo/`max` changes —
+point this repo at a local [`modular`](https://github.com/modular/modular)
+checkout with a working `./bazelw`.
+
+Symlink this repo into the checkout once. `$MODULAR_REPO` must point at it —
+there's no default (see the script's docstring for the nushell-specific
+syntax):
+
+```sh
+MODULAR_REPO=~/src/modular python3 scripts/setup_local_modular.py
+```
+
+Then build/test through modular's own Bazel, not pixi. Quote the target
+pattern — some shells (nushell) treat a trailing `...` as shorthand for
+`../..` otherwise:
+
+```sh
+cd ../modular
+./bazelw test '//max/_warp/tests/...'   # run the tests
+./bazelw build //max/_warp/src:warp     # just compile the library
+```
+
+Rerun `scripts/setup_local_modular.py` if either checkout moves.
+
 ## How it works
 
 - `Executor.add()` queues a task; nothing runs until `wait()`.
@@ -102,6 +129,33 @@ pixi run docs   # build the API docs site
   executor fires it lazily — once, right before the first coroutine that's
   waiting on one resumes. Any other coroutine queued behind it rides that
   same sync for free instead of triggering its own.
+
+### Running against a local Mojo build
+
+`pixi run test` uses the `mojo`/`max` conda packages. To instead build and run
+against a Mojo compiler, stdlib and `max` compiled from source — e.g. to test
+a change to the compiler itself, or to pick up unreleased Mojo/`max` changes —
+point this repo at a local [`modular`](https://github.com/modular/modular)
+checkout with a working `./bazelw`. This is the Mojo/Bazel equivalent of a
+Cargo `[patch]` override: `src/BUILD.bazel` and `tests/BUILD.bazel` define
+real `mojo_library`/`mojo_test` targets against modular's own Bazel rules, so
+Bazel rebuilds only whatever's actually stale on either side.
+
+```sh
+MODULAR_REPO=~/src/modular python3 scripts/setup_local_modular.py
+```
+
+Then build/test through modular's own Bazel, not pixi. Quote the target
+pattern — some shells (nushell) treat a trailing `...` as shorthand for
+`../..` otherwise:
+
+```sh
+cd $MODULAR_REPO
+./bazelw test '//max/_warp/tests/...'   # run the tests
+./bazelw build //max/_warp/src:warp     # just compile the library
+```
+
+Rerun `scripts/setup_local_modular.py` if either checkout moves.
 
 ## License
 

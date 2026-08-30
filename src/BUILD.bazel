@@ -1,0 +1,16 @@
+# Bazel package for building warp against a Mojo toolchain built from source.
+# Not meant to be built standalone: it's evaluated as part of a `modular`
+# checkout, which this repo gets symlinked into by scripts/setup_local_modular.sh
+# (`<modular>/max/_warp` -> this repo). See that script, and tests/BUILD.bazel
+# for the test targets that depend on this library.
+load("//bazel:api.bzl", "mojo_library")
+
+mojo_library(
+    name = "warp",
+    srcs = glob(["*.mojo"]),
+    visibility = ["//max/_warp/tests:__pkg__"],
+    deps = [
+        "//max/mojo/max:max",
+        "@mojo//:std",
+    ],
+)
