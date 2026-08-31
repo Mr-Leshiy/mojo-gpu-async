@@ -1,7 +1,7 @@
 """The queue that runs the coroutines and the device context they share."""
 
 from max.gpu.host import DeviceContext
-from std.builtin.coroutine import (
+from std.builtin._coroutine import (
     AnyCoroutine,
     Coroutine,
     RaisingCoroutine,
@@ -151,7 +151,7 @@ struct _ExecutorInner:
     def wait(mut self) raises:
         """Run queued coroutines until all have completed."""
 
-        @parameter
+        @__parameter
         def never() -> Bool:
             return False
 

@@ -100,9 +100,7 @@ def test_tasks_resume_round_robin_not_one_at_a_time() raises:
             # and every access agrees on the same memory. Same issue as
             # `_ExecutorInner._q` in `warp/executor.mojo`.
             var step = OwnedPointer(0)
-            var step_ptr = step.unsafe_ptr[mut=True]().unsafe_origin_cast[
-                MutUntrackedOrigin
-            ]()
+            var step_ptr = step.ptr().unsafe_origin_cast[MutUntrackedOrigin]()
 
             var t1 = executor.add(_record_step(context, step_ptr))
             var t2 = executor.add(_record_step(context, step_ptr))

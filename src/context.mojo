@@ -1,7 +1,7 @@
 """The handle a running coroutine has on its executor."""
 
 from max.gpu.host import DeviceContext
-from std.builtin.coroutine import (
+from std.builtin._coroutine import (
     AnyCoroutine,
     _coro_resume_fn,
     _suspend_async,
@@ -46,13 +46,12 @@ struct Context(Movable):
             is not the one driving it.
         """
 
-        @parameter
-        def body(hdl: AnyCoroutine):
+        def body(hdl: AnyCoroutine) {self}:
             # is_need_sync=True: `hdl` launched GPU work right before this
             # yield, so it must not resume until the device has synced.
             self._executor[].add(hdl, True)
 
-        _suspend_async[body]()
+        _suspend_async(body)
 
 
 struct _CoroutineContext[P: TrivialRegisterPassable](TrivialRegisterPassable):
