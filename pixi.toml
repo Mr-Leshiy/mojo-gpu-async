@@ -15,10 +15,7 @@ name = "warp"
 version = "0.1.0"
 
 [package.build]
-backend = { name = "pixi-build-mojo", version = "0.2.7.*", channels = [
-  "https://prefix.dev/pixi-build-backends",
-  "conda-forge",
-] }
+backend = { name = "pixi-build-mojo", version = "0.2.7.*" }
 
 [package.host-dependencies]
 mojo.workspace = true
