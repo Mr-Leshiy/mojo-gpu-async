@@ -6,16 +6,15 @@ from warp.context import Context
 from warp.executor import Executor
 
 
-def square_kernel(buf: Pointer[Float32, MutAnyOrigin]):
-    var idx = global_idx.x
-
-    var value = buf[unsafe_offset=idx]
-    buf[unsafe_offset=idx] = value * value
-
-
 async def square[
     size: Int
 ](ctx: Context, input: Array[Float32, size]) raises -> Array[Float32, size]:
+    def square_kernel(buf: Pointer[Float32, MutAnyOrigin]):
+        var idx = global_idx.x
+
+        var value = buf[unsafe_offset=idx]
+        buf[unsafe_offset=idx] = value * value
+
     var device_buffer = ctx.gpu_ctx().enqueue_create_buffer[DType.float32](size)
     ctx.gpu_ctx().enqueue_copy(
         dst_buf=device_buffer, src_ptr=input.unsafe_ptr()
@@ -56,6 +55,4 @@ def test_square_kernel_runs_through_executor() raises:
 
 
 def main() raises:
-    # TODO: https://github.com/modular/modular/issues/6890
-    # TestSuite.discover_tests[__functions_in_module()]().run()
-    test_square_kernel_runs_through_executor()
+    TestSuite.discover_tests[__functions_in_module()]().run()
