@@ -1,6 +1,6 @@
 """Small debugging helpers."""
 
-from std.builtin.coroutine import AnyCoroutine
+from std.builtin._coroutine import AnyCoroutine
 
 
 def _coroutine_address(hdl: AnyCoroutine) -> String:

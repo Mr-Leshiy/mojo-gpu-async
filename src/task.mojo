@@ -1,7 +1,7 @@
 """Tasks: the queued coroutines, their results, and their completion flags."""
 
 from std.atomic import Atomic
-from std.builtin.coroutine import AnyCoroutine, Coroutine, RaisingCoroutine
+from std.builtin._coroutine import AnyCoroutine, Coroutine, RaisingCoroutine
 from std.memory import ArcPointer, forget_deinit
 
 from .context import _CoroutineContext
@@ -12,7 +12,7 @@ comptime _COMPLETED_FLAG_TYPE = DType.uint8
 """Flag type of a task's completion flag: `Atomic` cannot store a `Bool`'s `i1`."""
 
 comptime _CompletedFlagPointer = Pointer[
-    Atomic[_COMPLETED_FLAG_TYPE], MutUntrackedOrigin
+    Atomic[Scalar[_COMPLETED_FLAG_TYPE]], MutUntrackedOrigin
 ]
 """Pointer to a task's completion flag, as the coroutine frame holds it."""
 
@@ -28,7 +28,7 @@ struct Task[type: Deinitable & Movable, origins: OriginSet](
 
     var _executor: ArcPointer[_ExecutorInner]
     var _handle: AnyCoroutine
-    var _completed: Atomic[_COMPLETED_FLAG_TYPE]
+    var _completed: Atomic[Scalar[_COMPLETED_FLAG_TYPE]]
     var _result: Self.type
 
     def __init__(
@@ -48,7 +48,7 @@ struct Task[type: Deinitable & Movable, origins: OriginSet](
                 transferred.
         """
         self._executor = executor^
-        self._completed = Atomic[_COMPLETED_FLAG_TYPE](0)
+        self._completed = Atomic[Scalar[_COMPLETED_FLAG_TYPE]](0)
 
         # `_result` isn't actually written yet — the coroutine writes it,
         # through the pointer handed to `_set_result_slot` below — but every
@@ -72,7 +72,7 @@ struct Task[type: Deinitable & Movable, origins: OriginSet](
         Consumes the task: the flag and the result slot it owns die with it.
         """
 
-        @parameter
+        @__parameter
         def completed() -> Bool:
             return self.is_completed()
 
@@ -100,7 +100,7 @@ struct RaisingTask[type: Deinitable & Movable, origins: OriginSet](
 
     var _executor: ArcPointer[_ExecutorInner]
     var _handle: AnyCoroutine
-    var _completed: Atomic[_COMPLETED_FLAG_TYPE]
+    var _completed: Atomic[Scalar[_COMPLETED_FLAG_TYPE]]
     var _result: Self.type
     var _error: Error
 
@@ -121,7 +121,7 @@ struct RaisingTask[type: Deinitable & Movable, origins: OriginSet](
                 transferred.
         """
         self._executor = executor^
-        self._completed = Atomic[_COMPLETED_FLAG_TYPE](0)
+        self._completed = Atomic[Scalar[_COMPLETED_FLAG_TYPE]](0)
 
         # Neither slot is actually written yet — the coroutine writes
         # whichever one it completes with, through the pointers handed to
@@ -154,7 +154,7 @@ struct RaisingTask[type: Deinitable & Movable, origins: OriginSet](
             The error the coroutine raised, if it raised one.
         """
 
-        @parameter
+        @__parameter
         def completed() -> Bool:
             return self.is_completed()
 
@@ -188,7 +188,7 @@ struct RaisingTask[type: Deinitable & Movable, origins: OriginSet](
 
 @always_inline
 def _completed_flag_ptr(
-    completed: Atomic[_COMPLETED_FLAG_TYPE],
+    completed: Atomic[Scalar[_COMPLETED_FLAG_TYPE]],
 ) -> _CompletedFlagPointer:
     """Build the untracked pointer a coroutine frame uses to reach a flag."""
     return _CompletedFlagPointer(unsafe_from_address=Int(Pointer(to=completed)))

@@ -58,7 +58,7 @@ def main() raises:
 
 ## Install
 
-Requires [pixi](https://pixi.sh).
+Requires [pixi](https://pixi.sh) >=`0.78.0`.
 
 ```toml
 [workspace]
@@ -83,8 +83,6 @@ warp = { git = "https://github.com/Mr-Leshiy/warp.git", branch = "main" }
 ```
 
 ## Development
-
-Requires [pixi](https://pixi.sh).
 
 ```sh
 pixi run fmt    # format
