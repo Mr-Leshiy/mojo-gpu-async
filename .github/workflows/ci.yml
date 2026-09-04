@@ -24,3 +24,29 @@ jobs:
 
       - name: Assert no uncommitted formatting changes
         run: git diff --exit-code
+
+  test:
+    name: Test suite (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # One free GitHub-hosted runner per platform in pixi.toml's
+        # `platforms` list (linux-64, linux-aarch64, osx-arm64). None of
+        # these have a GPU, so the accelerator-gated test bodies (`comptime
+        # if has_accelerator()`) compile but skip their assertions -- this
+        # only catches build breaks, not runtime GPU behavior. Run
+        # `pixi run test` on a GPU-enabled host to exercise the real logic.
+        runner: [ubuntu-latest, ubuntu-24.04-arm, macos-14]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: latest
+          cache: true
+
+      - name: Run tests
+        run: pixi run test
