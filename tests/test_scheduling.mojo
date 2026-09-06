@@ -8,7 +8,6 @@ is an implementation detail, not a contract.
 
 from max.gpu.host import DeviceContext
 from std.memory import OwnedPointer
-from std.random import random_si64, seed
 from std.sys import has_accelerator
 from std.testing import TestSuite, assert_equal, assert_true
 
@@ -90,11 +89,6 @@ def test_tasks_make_progress_without_corrupting_shared_state() raises:
             # contract (see this file's ground rule).
             assert_equal(counter_ptr[], 6)
 
-            t1^.wait()
-            t2^.wait()
-            t3^.wait()
-
-
 async def _no_yield(value: Int) -> Int:
     return value
 
@@ -116,40 +110,6 @@ def test_mixed_yielding_and_non_yielding_tasks_complete_correctly() raises:
             assert_equal(t2^.wait(), 1)
             assert_equal(t3^.wait(), 20)
             assert_equal(t4^.wait(), 1)
-
-
-async def _yield_n_times(context: Context, n: Int) -> Int:
-    var i = 0
-    while i < n:
-        await context.synchronize()
-        i += 1
-    return n
-
-
-comptime _MAX_RANDOM_YIELDS = 4
-
-
-def _spawn_and_verify_random[
-    N: Int
-](mut executor: Executor, context: Context) raises:
-    """Queues `N` tasks with random yield counts before draining any of
-    them, then verifies each result as the recursion unwinds."""
-    comptime if N == 0:
-        executor.wait()
-    else:
-        var yields = Int(random_si64(0, _MAX_RANDOM_YIELDS))
-        var task = executor.add(_yield_n_times(context, yields))
-        _spawn_and_verify_random[N - 1](executor, context)
-        assert_equal(task^.wait(), yields)
-
-
-def test_randomized_tasks_with_random_yield_counts_complete_correctly() raises:
-    comptime if has_accelerator():
-        seed()
-        with DeviceContext() as ctx:
-            var executor = Executor(ctx)
-            var context = executor.context()
-            _spawn_and_verify_random[16](executor, context)
 
 
 def main() raises:

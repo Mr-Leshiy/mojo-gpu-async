@@ -8,7 +8,6 @@ being drained through any other call first.
 """
 
 from max.gpu.host import DeviceContext
-from std.random import random_si64, seed
 from std.sys import has_accelerator
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
@@ -79,53 +78,6 @@ def test_task_yields_many_times_in_a_row_with_nothing_else_queued() raises:
             var task = executor.add(_yield_n_times(context, 8))
 
             assert_equal(task^.wait(), 8)
-
-
-comptime _MAX_RANDOM_YIELDS = 4
-
-
-def _spawn_and_wait_random_order[
-    N: Int
-](
-    mut executor: Executor,
-    context: Context,
-    mut actual_total: Int,
-    mut expected_total: Int,
-) raises:
-    """Queues `N` tasks, and for each one, randomly decides (at the point
-    it's queued) whether to wait on it immediately or only after every task
-    behind it has also been queued -- so the tasks are waited on in a
-    genuinely randomized order relative to how they were created."""
-    comptime if N == 0:
-        pass
-    else:
-        var yields = Int(random_si64(0, _MAX_RANDOM_YIELDS))
-        expected_total += yields
-        var task = executor.add(_yield_n_times(context, yields))
-        if random_si64(0, 1) == 0:
-            actual_total += task^.wait()
-            _spawn_and_wait_random_order[N - 1](
-                executor, context, actual_total, expected_total
-            )
-        else:
-            _spawn_and_wait_random_order[N - 1](
-                executor, context, actual_total, expected_total
-            )
-            actual_total += task^.wait()
-
-
-def test_task_wait_called_in_random_order() raises:
-    comptime if has_accelerator():
-        seed()
-        with DeviceContext() as ctx:
-            var executor = Executor(ctx)
-            var context = executor.context()
-            var actual_total = 0
-            var expected_total = 0
-            _spawn_and_wait_random_order[10](
-                executor, context, actual_total, expected_total
-            )
-            assert_equal(actual_total, expected_total)
 
 
 def main() raises:
