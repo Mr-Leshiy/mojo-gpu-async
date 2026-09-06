@@ -89,6 +89,7 @@ def test_tasks_make_progress_without_corrupting_shared_state() raises:
             # contract (see this file's ground rule).
             assert_equal(counter_ptr[], 6)
 
+
 async def _no_yield(value: Int) -> Int:
     return value
 
