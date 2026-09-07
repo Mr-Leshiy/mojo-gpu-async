@@ -33,10 +33,12 @@ jobs:
       matrix:
         # One free GitHub-hosted runner per platform in pixi.toml's
         # `platforms` list (linux-64, linux-aarch64, osx-arm64). None of
-        # these have a GPU, so the accelerator-gated test bodies (`comptime
-        # if has_accelerator()`) compile but skip their assertions -- this
-        # only catches build breaks, not runtime GPU behavior. Run
-        # `pixi run test` on a GPU-enabled host to exercise the real logic.
+        # these have a GPU: the accelerator-gated test bodies (`comptime if
+        # has_accelerator()`) compile but skip their assertions, and
+        # scripts/test.py skips the one file with a real GPU kernel
+        # outright (see its docstring) -- this only catches build breaks,
+        # not runtime GPU behavior. Run `pixi run test` on a GPU-enabled
+        # host to exercise the real logic.
         runner: [ubuntu-latest, ubuntu-24.04-arm, macos-14]
     steps:
       - name: Checkout

@@ -1,5 +1,4 @@
 from max.gpu.host import DeviceContext
-from std.sys import has_accelerator
 from std.testing import TestSuite, assert_equal, assert_false
 
 from warp.executor import Executor
@@ -15,30 +14,28 @@ async def _no_yield(value: Int) -> Int:
 
 
 def test_executor_wait_on_empty_queue_and_called_twice() raises:
-    comptime if has_accelerator():
-        with DeviceContext() as ctx:
-            var executor = Executor(ctx)
+    with DeviceContext() as ctx:
+        var executor = Executor(ctx)
 
-            executor.wait()
-            executor.wait()
+        executor.wait()
+        executor.wait()
 
-            var task = executor.add(_no_yield(1))
-            executor.wait()
-            # Nothing left queued -- must not hang or error.
-            executor.wait()
+        var task = executor.add(_no_yield(1))
+        executor.wait()
+        # Nothing left queued -- must not hang or error.
+        executor.wait()
 
-            assert_equal(task^.wait(), 1)
+        assert_equal(task^.wait(), 1)
 
 
 def test_executor_dropped_with_task_still_queued() raises:
-    comptime if has_accelerator():
-        with DeviceContext() as ctx:
-            var executor = Executor(ctx)
+    with DeviceContext() as ctx:
+        var executor = Executor(ctx)
 
-            # Queued but never driven: neither `task.wait()` nor
-            # `executor.wait()` is called before both go out of scope.
-            var task = executor.add(_no_yield(1))
-            assert_false(task.is_completed())
+        # Queued but never driven: neither `task.wait()` nor
+        # `executor.wait()` is called before both go out of scope.
+        var task = executor.add(_no_yield(1))
+        assert_false(task.is_completed())
 
 
 def main() raises:

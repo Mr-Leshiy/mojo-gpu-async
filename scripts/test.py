@@ -11,6 +11,13 @@ the naive backends.
 
 Every test file is run even if an earlier one fails; the failures are listed
 again at the end.
+
+Files in GPU_KERNEL_TEST_FILES define a real GPU kernel (`enqueue_function`),
+which the toolchain must compile to a concrete GPU architecture even if
+`comptime if has_accelerator():` means it'll never run -- unlike the rest of
+the suite, that's a hard compile failure on hardware-less hosts, not
+something a runtime guard can skip. So on hosts with no accelerator, those
+files are skipped outright instead of being handed to `mojo run`.
 """
 
 import os
@@ -19,6 +26,21 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+GPU_KERNEL_TEST_FILES = {
+    Path("tests/test_gpu_synchronize.mojo"),
+}
+
+
+def has_accelerator() -> bool:
+    result = subprocess.run(
+        ["mojo", "run", "-I", ".", "scripts/has_accelerator.mojo"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout.strip() == "true"
 
 
 def main() -> int:
@@ -30,9 +52,14 @@ def main() -> int:
         print("no tests/**/test_*.mojo files found", file=sys.stderr)
         return 1
 
+    accelerator_available = has_accelerator()
+
     failed = []
     for test in tests:
         rel = test.relative_to(ROOT)
+        if rel in GPU_KERNEL_TEST_FILES and not accelerator_available:
+            print(f"==> skipping {rel} (no accelerator detected)", flush=True)
+            continue
         cmd = ["mojo", "run", *features, "-I", ".", str(rel)]
         print(f"==> {' '.join(cmd)}", flush=True)
         if subprocess.run(cmd, cwd=ROOT).returncode != 0:
