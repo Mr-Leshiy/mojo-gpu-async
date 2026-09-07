@@ -33,10 +33,9 @@ jobs:
       matrix:
         # One free GitHub-hosted runner per platform in pixi.toml's
         # `platforms` list (linux-64, linux-aarch64, osx-arm64). None of
-        # these have a GPU, so the accelerator-gated test bodies (`comptime
-        # if has_accelerator()`) compile but skip their assertions -- this
-        # only catches build breaks, not runtime GPU behavior. Run
-        # `pixi run test` on a GPU-enabled host to exercise the real logic.
+        # these have a GPU. $MOJO_TEST_SKIP_GPU_TESTS below excludes
+        # tests/test_with_gpu_synchronize.mojo (see scripts/test.py's
+        # docstring)
         runner: [ubuntu-latest, ubuntu-24.04-arm, macos-14]
     steps:
       - name: Checkout
@@ -49,4 +48,6 @@ jobs:
           cache: true
 
       - name: Run tests
+        env:
+          MOJO_TEST_SKIP_GPU_TESTS: "1"
         run: pixi run test
